@@ -7,6 +7,8 @@ import google.generativeai as genai  # Correct import for Google Gemini API
 # Load environment variables from the .env file
 load_dotenv()
 
+# Fetch the Gemini API key from Streamlit secrets
+api_key = st.secrets["GEMINI"]["API_KEY"]
 # Fetch the API key from environment variables
 api_key = os.getenv("GEMINI_API_KEY")
 
