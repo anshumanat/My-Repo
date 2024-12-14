@@ -57,20 +57,20 @@ else:
         return extracted_info
 
     # Streamlit app UI
-    st.title("Checkmate: Cheque Information Extraction with Gemini AI")
+    st.title("CheckMate: Cheque Information Extraction with Gemini AI")
 
-    # Instructions and welcome message right under the title
+    # Instructions for the user
     st.markdown("""
-    **Welcome to the Checkmate Cheque Information Extraction App!**  
-    This app uses **Gemini AI** to analyze the image of a cheque and extract important information such as:
+    **Welcome to the Cheque Information Extraction App!**  
+    This app uses Gemini AI to analyze the image of a cheque and extract important information such as:
 
     - Payee Name
     - Bank Name
     - Account Number
+    - Date
     - Cheque Number
     - Amount
-    - Date
-    - And other relevant details from the cheque image.
+    - And other relevant information
 
     **How to Use**:
     1. Upload an image of a cheque.
@@ -123,6 +123,5 @@ else:
                 st.error(f"Error generating content: {e}")
         else:
             st.error("Failed to load the image. Please try uploading again.")
-
     else:
         st.info("Please upload a cheque image to begin the analysis.")
