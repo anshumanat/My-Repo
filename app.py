@@ -94,22 +94,23 @@ else:
         # Check if the image is loaded successfully
         if img:
             # Define the prompt for Gemini AI
-           prompt = ("Extract the Payee Name, Bank Name, Account Number, Date, Cheque Number, and Amount from this cheque image."
-                    )
+            prompt = (
+                "Extract the Payee Name, Bank Name, Account Number, Date, Cheque Number, and Amount from this cheque image."
+            )
 
             # Generate response from Gemini AI
             try:
                 result = model.generate_content([img, prompt])
 
+                # Log the full response object
+                st.write(result)  # Check the response object directly
+
                 # Check if the response contains text
                 if result.text:
                     st.subheader("Extracted Information (Text):")
-                    st.write(result.text)  # Display the result text from the model
+                    st.write(result.text)
 
-                    # Parse the extracted text into a structured format (dictionary)
                     extracted_info = parse_extracted_info(result.text)
-
-                    # Display the extracted information as a table
                     st.subheader("Extracted Information (Table):")
                     st.table(extracted_info)
                 else:
