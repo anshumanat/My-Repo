@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from PIL import Image
 import google.generativeai as genai  # Correct import for Google Gemini API
+import base64
+from io import BytesIO
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -27,6 +29,12 @@ else:
         except Exception as e:
             st.error(f"Error loading image: {e}")
             return None
+
+    # Function to convert image to base64 (if necessary)
+    def image_to_base64(image):
+        buffered = BytesIO()
+        image.save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
     # Function to parse extracted text into a structured format (like a dictionary)
     def parse_extracted_info(extracted_text):
@@ -93,6 +101,9 @@ else:
 
         # Check if the image is loaded successfully
         if img:
+            # Convert the image to base64 if necessary
+            img_base64 = image_to_base64(img)
+
             # Define the prompt for Gemini AI
             prompt = (
                 "Extract the Payee Name, Bank Name, Account Number, Date, Cheque Number, and Amount from this cheque image."
@@ -100,30 +111,23 @@ else:
 
             # Generate response from Gemini AI
             try:
-                result = model.generate_content([img, prompt])
+                # Here we are passing the base64 encoded image
+                result = model.generate_content([img_base64, prompt])
 
                 # Print the result to check the structure (debugging purpose)
                 st.write("Full Response from Gemini:")
                 st.json(result)
 
-                # Assuming the correct way to access the content after inspecting the response:
-                # We will now handle the response content based on the structure.
-
                 # Check if result.candidates contains any response
                 if result.candidates:
-                    # Instead of using result.candidates[0].content["parts"][0].text
-                    # Let's explore the structure of result.candidates[0].content
-                    # You need to print the content to verify the correct way to access it
-                    content = result.candidates[0].content  # Try printing this directly
+                    # Assuming the correct way to access the content after inspecting the response
+                    content = result.candidates[0].content
 
-                    st.write("Content object:", content)  # Print the content to inspect
-
-                    # Try accessing the text field within the content object, if possible
-                    if hasattr(content, 'text'):
-                        content_text = content.text  # Accessing the text if it's an attribute
+                    # If content contains parts, extract the text from them
+                    if content and 'parts' in content:
+                        content_text = content['parts'][0]['text']
                     else:
-                        # Handle alternative structure
-                        content_text = "Content text is unavailable."
+                        content_text = "Content not available in the expected format."
 
                     # Display the extracted information as text
                     st.subheader("Extracted Information (Text):")
