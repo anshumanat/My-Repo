@@ -1,26 +1,19 @@
-import os
 import streamlit as st
-from dotenv import load_dotenv
+import google.generativeai as genai
 from PIL import Image
-import google.generativeai as genai  # Correct import for Google Gemini API
-
-# Load environment variables from the .env file
-load_dotenv()
 
 # Fetch the Gemini API key from Streamlit secrets
 api_key = st.secrets["GEMINI"]["API_KEY"]
-# Fetch the API key from environment variables
-api_key = os.getenv("GEMINI_API_KEY")
 
-# Ensure that the API key is loaded correctly
+# Check if the API key is loaded correctly
 if not api_key:
-    st.error("API Key is missing! Please set the GEMINI_API_KEY environment variable.")
+    st.error("API Key is missing! Please set the GEMINI_API_KEY in Streamlit Secrets.")
 else:
     # Configure the Gemini API with the retrieved key
     genai.configure(api_key=api_key)
 
-    # Initialize the Gemini model
-    model = genai.GenerativeModel('models/gemini-1.5-pro-001')  # Replace with the appropriate model name if needed
+    # Initialize the Gemini model (update the model name if necessary)
+    model = genai.GenerativeModel('models/gemini-1.5-pro-001')
 
     # Function to load and process images
     def load_image(image):
@@ -32,7 +25,6 @@ else:
 
     # Function to parse extracted text into a structured format (like a dictionary)
     def parse_extracted_info(extracted_text):
-        # Example parsing logic: We can split the text and assign it to variables
         extracted_info = {
             "Payee Name": None,
             "Bank Name": None,
@@ -42,8 +34,6 @@ else:
             "Date": None
         }
 
-        # Here, a simple parsing could be based on some keywords (e.g., "Payee:", "Bank:", etc.)
-        # You can modify this to match the format of your results.
         lines = extracted_text.split("\n")
         for line in lines:
             if "Payee" in line:
