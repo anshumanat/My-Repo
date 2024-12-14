@@ -1,7 +1,7 @@
-pdf2image
+
 streamlit
 google-generativeai
-cloudconvert
 Pillow
 requests
 python-dotenv
+pandas
