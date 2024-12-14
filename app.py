@@ -1,3 +1,4 @@
+import time
 import os
 import google.generativeai as genai
 import streamlit as st
@@ -5,8 +6,8 @@ from PIL import Image
 from dotenv import load_dotenv
 import requests
 import io
-import cloudconvert  # CloudConvert SDK for conversion
-import zipfile  # To handle ZIP files
+import cloudconvert
+import zipfile
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,7 +38,6 @@ model = genai.GenerativeModel('models/gemini-1.5-pro-001')
 
 # Function to convert PDF to Images using CloudConvert API
 def convert_pdf_to_images(uploaded_file):
-    # Save uploaded PDF to a temporary file
     with open("/tmp/tempfile.pdf", "wb") as f:
         f.write(uploaded_file.getvalue())
 
@@ -61,7 +61,7 @@ def convert_pdf_to_images(uploaded_file):
                 }
             }
         })
-        
+
         # Debugging: Print the full job response
         print("CloudConvert Job Response:", job)
 
@@ -74,9 +74,18 @@ def convert_pdf_to_images(uploaded_file):
         file_form = upload_task['result']['form']
 
         # Upload the file to CloudConvert
-        response = cloudconvert.files.upload(file_form, "/tmp/tempfile.pdf")
+        cloudconvert.files.upload(file_form, "/tmp/tempfile.pdf")
 
-        # Check for conversion completion
+        # Indicating that the conversion is in progress
+        st.write("Conversion in progress...")
+        time.sleep(2)  # Simulate delay for progress bar
+
+        # Poll the task to check if it's done
+        while job['tasks'][1]['status'] != "finished":
+            time.sleep(5)  # Wait for a while before checking again
+            job = cloudconvert.Job.fetch(job['id'])  # Fetch the job status
+
+        # Task finished, now get the export URL
         export_task = job['tasks'][2]
         download_url = export_task['result']['files'][0]['url']
 
@@ -86,7 +95,6 @@ def convert_pdf_to_images(uploaded_file):
         return img_data
 
     except Exception as e:
-        # Log and display any error encountered during the process
         st.error(f"Error converting PDF to images: {str(e)}")
         return None
 
@@ -118,6 +126,12 @@ if uploaded_file is not None:
     if uploaded_file.type == "application/pdf":
         st.info("Processing PDF with CloudConvert...")
 
+        # Show progress bar for PDF conversion
+        progress_bar = st.progress(0)
+        for percent in range(0, 101, 10):
+            time.sleep(1)  # Simulate time delay for processing
+            progress_bar.progress(percent)
+
         # Convert the PDF to images using CloudConvert
         img_data = convert_pdf_to_images(uploaded_file)
 
@@ -131,7 +145,6 @@ if uploaded_file is not None:
             # Extract and display the images from the ZIP file
             with zipfile.ZipFile("/tmp/converted_images.zip", "r") as zip_ref:
                 zip_ref.extractall("/tmp/")  # Extract all images to /tmp/
-                # Get all PNG files in the extracted folder
                 images = [Image.open(os.path.join("/tmp/", f)) for f in os.listdir("/tmp/") if f.endswith(".png")]
 
             # Display each extracted image and analyze it
@@ -169,5 +182,6 @@ st.markdown("""
       - Amount and other details
     - For PDF files, each page will be processed individually.
 """)
+
 
 
