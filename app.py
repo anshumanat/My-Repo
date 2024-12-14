@@ -41,42 +41,54 @@ def convert_pdf_to_images(uploaded_file):
     with open("/tmp/tempfile.pdf", "wb") as f:
         f.write(uploaded_file.getvalue())
 
-    # Create a job for converting PDF to images using CloudConvert API
-    job = cloudconvert.Job.create({
-        'tasks': {
-            'import-1': {
-                'operation': 'import/upload'
-            },
-            'convert-1': {
-                'operation': 'convert',
-                'input': 'import-1',
-                'input_format': 'pdf',
-                'output_format': 'png',
-                'engine': 'poppler'
-            },
-            'export-1': {
-                'operation': 'export/url',
-                'input': 'convert-1'
+    try:
+        # Create a job for converting PDF to images using CloudConvert API
+        job = cloudconvert.Job.create({
+            'tasks': {
+                'import-1': {
+                    'operation': 'import/upload'
+                },
+                'convert-1': {
+                    'operation': 'convert',
+                    'input': 'import-1',
+                    'input_format': 'pdf',
+                    'output_format': 'png',
+                    'engine': 'poppler'
+                },
+                'export-1': {
+                    'operation': 'export/url',
+                    'input': 'convert-1'
+                }
             }
-        }
-    })
+        })
+        
+        # Debugging: Print the full job response
+        print("CloudConvert Job Response:", job)
 
-    # Upload the PDF file to CloudConvert
-    upload_task = job['tasks'][0]
-    upload_url = upload_task['result']['form']['url']
-    file_form = upload_task['result']['form']
+        if "tasks" not in job:
+            raise KeyError("No tasks found in the job response.")
 
-    # Upload the file to CloudConvert
-    response = cloudconvert.files.upload(file_form, "/tmp/tempfile.pdf")
+        # Upload the PDF file to CloudConvert
+        upload_task = job['tasks'][0]
+        upload_url = upload_task['result']['form']['url']
+        file_form = upload_task['result']['form']
 
-    # Check for conversion completion
-    export_task = job['tasks'][2]
-    download_url = export_task['result']['files'][0]['url']
+        # Upload the file to CloudConvert
+        response = cloudconvert.files.upload(file_form, "/tmp/tempfile.pdf")
 
-    # Download the converted images (ZIP file)
-    img_data = cloudconvert.files.download(download_url)
+        # Check for conversion completion
+        export_task = job['tasks'][2]
+        download_url = export_task['result']['files'][0]['url']
 
-    return img_data
+        # Download the converted images (ZIP file)
+        img_data = cloudconvert.files.download(download_url)
+
+        return img_data
+
+    except Exception as e:
+        # Log and display any error encountered during the process
+        st.error(f"Error converting PDF to images: {str(e)}")
+        return None
 
 # Function to analyze and extract key details from the image using Gemini
 def analyze_image(image):
@@ -109,28 +121,31 @@ if uploaded_file is not None:
         # Convert the PDF to images using CloudConvert
         img_data = convert_pdf_to_images(uploaded_file)
 
-        # Save the converted images as a ZIP file
-        with open("/tmp/converted_images.zip", "wb") as f:
-            f.write(img_data)
+        if img_data:
+            # Save the converted images as a ZIP file
+            with open("/tmp/converted_images.zip", "wb") as f:
+                f.write(img_data)
 
-        st.success("PDF converted to images successfully!")
+            st.success("PDF converted to images successfully!")
 
-        # Extract and display the images from the ZIP file
-        with zipfile.ZipFile("/tmp/converted_images.zip", "r") as zip_ref:
-            zip_ref.extractall("/tmp/")  # Extract all images to /tmp/
-            # Get all PNG files in the extracted folder
-            images = [Image.open(os.path.join("/tmp/", f)) for f in os.listdir("/tmp/") if f.endswith(".png")]
+            # Extract and display the images from the ZIP file
+            with zipfile.ZipFile("/tmp/converted_images.zip", "r") as zip_ref:
+                zip_ref.extractall("/tmp/")  # Extract all images to /tmp/
+                # Get all PNG files in the extracted folder
+                images = [Image.open(os.path.join("/tmp/", f)) for f in os.listdir("/tmp/") if f.endswith(".png")]
 
-        # Display each extracted image and analyze it
-        for i, image in enumerate(images):
-            st.image(image, caption=f"Page {i+1} Image", use_column_width=True)
+            # Display each extracted image and analyze it
+            for i, image in enumerate(images):
+                st.image(image, caption=f"Page {i+1} Image", use_column_width=True)
 
-            if st.button(f"Analyze Page {i+1}"):
-                with st.spinner(f"Processing Page {i+1}..."):
-                    analysis_result = analyze_image(image)
-                    st.subheader(f"Extracted Information from Page {i+1}:")
-                    st.write(analysis_result)
-
+                if st.button(f"Analyze Page {i+1}"):
+                    with st.spinner(f"Processing Page {i+1}..."):
+                        analysis_result = analyze_image(image)
+                        st.subheader(f"Extracted Information from Page {i+1}:")
+                        st.write(analysis_result)
+        else:
+            st.error("Error converting the PDF to images.")
+        
     else:
         # If the uploaded file is an image, open it directly
         image = Image.open(uploaded_file)
@@ -154,4 +169,5 @@ st.markdown("""
       - Amount and other details
     - For PDF files, each page will be processed individually.
 """)
+
 
