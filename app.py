@@ -57,20 +57,20 @@ else:
         return extracted_info
 
     # Streamlit app UI
-    st.title("CheckMate: Cheque Information Extraction with Gemini AI")
+    st.title("Checkmate: Cheque Information Extraction with Gemini AI")
 
-    # Instructions for the user
+    # Instructions and welcome message right under the title
     st.markdown("""
-    **Welcome to the Cheque Information Extraction App!**  
-    This app uses Gemini AI to analyze the image of a cheque and extract important information such as:
+    **Welcome to the Checkmate Cheque Information Extraction App!**  
+    This app uses **Gemini AI** to analyze the image of a cheque and extract important information such as:
 
     - Payee Name
     - Bank Name
     - Account Number
-    - Date
     - Cheque Number
     - Amount
-    - And other relevant information
+    - Date
+    - And other relevant details from the cheque image.
 
     **How to Use**:
     1. Upload an image of a cheque.
@@ -102,20 +102,40 @@ else:
             try:
                 result = model.generate_content([img, prompt])
 
-                # Access the text content directly (without the raw response)
+                # Print the result to check the structure (debugging purpose)
+                st.write("Full Response from Gemini:")
+                st.json(result)
+
+                # Assuming the correct way to access the content after inspecting the response:
+                # We will now handle the response content based on the structure.
+
+                # Check if result.candidates contains any response
                 if result.candidates:
-                    content = result.candidates[0].content["parts"][0].text
+                    # Instead of using result.candidates[0].content["parts"][0].text
+                    # Let's explore the structure of result.candidates[0].content
+                    # You need to print the content to verify the correct way to access it
+                    content = result.candidates[0].content  # Try printing this directly
+
+                    st.write("Content object:", content)  # Print the content to inspect
+
+                    # Try accessing the text field within the content object, if possible
+                    if hasattr(content, 'text'):
+                        content_text = content.text  # Accessing the text if it's an attribute
+                    else:
+                        # Handle alternative structure
+                        content_text = "Content text is unavailable."
 
                     # Display the extracted information as text
                     st.subheader("Extracted Information (Text):")
-                    st.write(content)
+                    st.write(content_text)
 
                     # Parse the extracted text into a structured format (dictionary)
-                    extracted_info = parse_extracted_info(content)
+                    extracted_info = parse_extracted_info(content_text)
 
                     # Display the extracted information as a table
                     st.subheader("Extracted Information (Table):")
                     st.table(extracted_info)
+
                 else:
                     st.warning("No content returned. Please try again with a different image.")
 
@@ -123,5 +143,6 @@ else:
                 st.error(f"Error generating content: {e}")
         else:
             st.error("Failed to load the image. Please try uploading again.")
+
     else:
         st.info("Please upload a cheque image to begin the analysis.")
