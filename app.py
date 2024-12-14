@@ -94,8 +94,8 @@ else:
         # Check if the image is loaded successfully
         if img:
             # Define the prompt for Gemini AI
-           prompt = "Extract the Payee Name, Bank Name, Account Number, Date, Cheque Number, and Amount from this cheque image."
-
+           prompt = ("Extract the Payee Name, Bank Name, Account Number, Date, Cheque Number, and Amount from this cheque image."
+                    )
 
             # Generate response from Gemini AI
             try:
