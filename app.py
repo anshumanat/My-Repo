@@ -102,9 +102,14 @@ else:
             try:
                 result = model.generate_content([img, prompt])
 
-                # Access the text content directly (without the raw response)
+                # Print the result to check the structure (debugging purpose)
+                st.write("Full Response from Gemini:")
+                st.json(result)
+
+                # Assuming the correct way to access the content after inspecting the response:
+                # We will now handle the response content based on the structure.
                 if result.candidates:
-                    content = result.candidates[0].content["parts"][0].text
+                    content = result.candidates[0].content["parts"][0].text  # Adjust based on response
 
                     # Display the extracted information as text
                     st.subheader("Extracted Information (Text):")
