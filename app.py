@@ -1,11 +1,16 @@
 import streamlit as st
-import google.generativeai as genai
+import os
+from dotenv import load_dotenv
 from PIL import Image
+import google.generativeai as genai  # Correct import for Google Gemini API
+
+# Load environment variables from the .env file
+load_dotenv()
 
 # Fetch the Gemini API key from Streamlit secrets
 api_key = st.secrets["GEMINI"]["API_KEY"]
 
-# Check if the API key is loaded correctly
+# Ensure the API key is loaded correctly
 if not api_key:
     st.error("API Key is missing! Please set the GEMINI_API_KEY in Streamlit Secrets.")
 else:
@@ -90,25 +95,27 @@ else:
         if img:
             # Define the prompt for Gemini AI
             prompt = (
-                prompt = (
-    "Analyze this cheque image and extract the Payee Name, Bank Name, Account Number, Date, "
-    "Cheque Number, and Amount from the cheque."
-)
-
+                "Analyze this cheque image and extract the Payee Name, Bank Name, Account Number, Date, "
+                "Cheque Number, and Amount from the cheque."
             )
 
             # Generate response from Gemini AI
             try:
                 result = model.generate_content([img, prompt])
-                st.subheader("Extracted Information (Text):")
-                st.write(result.text)  # Display the result text from the model
 
-                # Parse the extracted text into a structured format (dictionary)
-                extracted_info = parse_extracted_info(result.text)
+                # Check if the response contains text
+                if result.text:
+                    st.subheader("Extracted Information (Text):")
+                    st.write(result.text)  # Display the result text from the model
 
-                # Display the extracted information as a table
-                st.subheader("Extracted Information (Table):")
-                st.table(extracted_info)
+                    # Parse the extracted text into a structured format (dictionary)
+                    extracted_info = parse_extracted_info(result.text)
+
+                    # Display the extracted information as a table
+                    st.subheader("Extracted Information (Table):")
+                    st.table(extracted_info)
+                else:
+                    st.warning("No valid content returned from the model. Please try again.")
 
             except Exception as e:
                 st.error(f"Error generating content: {e}")
