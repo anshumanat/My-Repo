@@ -2,8 +2,9 @@ import os
 import google.generativeai as genai
 import streamlit as st
 from PIL import Image
-from pdf2image import convert_from_path
 from dotenv import load_dotenv
+import requests
+import io
 
 # Load environment variables from .env file
 load_dotenv()
@@ -21,6 +22,26 @@ else:
 
 # Initialize the Generative Model
 model = genai.GenerativeModel('models/gemini-1.5-pro-001')
+
+# Function to convert PDF to Image using CloudConvert API
+def convert_pdf_to_image(pdf_file):
+    # CloudConvert API endpoint and your API key (sign up for CloudConvert and get your API key)
+    api_key = "your_cloudconvert_api_key"  # Replace with your actual API key
+    url = "https://api.cloudconvert.com/v2/convert"
+
+    # Send the PDF to CloudConvert API for conversion to image
+    response = requests.post(
+        url,
+        headers={"Authorization": f"Bearer {api_key}"},
+        files={"file": pdf_file},
+    )
+    
+    # If the request is successful, return the image
+    if response.status_code == 200:
+        image_data = response.content
+        return Image.open(io.BytesIO(image_data))
+    else:
+        return None
 
 # Function to analyze and extract key details from the image using Gemini
 def analyze_image(image):
@@ -43,30 +64,30 @@ def analyze_image(image):
 # Streamlit UI with a better title and UI enhancements
 st.title("Checkmate: AI-Powered Cheque Information Extraction")
 st.markdown("""
-    Upload an image or PDF of a cheque to extract key details like Payee Name, Bank Name, Cheque Number, and more.
+    Upload an image of a cheque or a PDF to extract key details like Payee Name, Bank Name, Cheque Number, and more.
     This tool uses **Google Gemini AI** to intelligently analyze the image.
 """)
 
-# Upload image or PDF functionality
-uploaded_file = st.file_uploader("Choose an image or PDF...", type=["jpg", "jpeg", "png", "pdf"])
+# File uploader for image or PDF
+uploaded_file = st.file_uploader("Choose a file (PDF, JPG, PNG)...", type=["jpg", "jpeg", "png", "pdf"])
 
 if uploaded_file is not None:
-    # Handle PDF files
+    # Check if the uploaded file is a PDF
     if uploaded_file.type == "application/pdf":
-        st.write("PDF file detected, converting to image...")
+        st.info("Processing PDF...")
 
-        # Convert the first page of the PDF to an image
-        images = convert_from_path(uploaded_file, first_page=1, last_page=1)
-        image = images[0]  # Get the first page as an image
+        # Convert the PDF to an image using CloudConvert API
+        image = convert_pdf_to_image(uploaded_file)
 
-        # Display the image
-        st.image(image, caption="First page of the uploaded PDF", use_column_width=True)
+        if image:
+            # Display the converted image
+            st.image(image, caption="Converted Image", use_column_width=True)
+        else:
+            st.error("Failed to convert PDF to image.")
 
     else:
-        # Read the uploaded image
+        # If the uploaded file is an image, open it directly
         image = Image.open(uploaded_file)
-
-        # Display the image
         st.image(image, caption="Uploaded Image", use_column_width=True)
 
     # Analyze the image when the user clicks the button
@@ -76,7 +97,7 @@ if uploaded_file is not None:
             st.subheader("Extracted Information:")
             st.write(analysis_result)
 
-# Additional styling or info can go here
+# Additional instructions and info
 st.markdown("""
     #### How it works:
     - Upload a cheque image or PDF to extract key details.
@@ -87,3 +108,4 @@ st.markdown("""
       - Cheque Number
       - Amount and other details
 """)
+
