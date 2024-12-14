@@ -57,20 +57,20 @@ else:
         return extracted_info
 
     # Streamlit app UI
-    st.title("Cheque Information Extraction with Gemini AI")
+    st.title("Checkmate: Cheque Information Extraction with Gemini AI")
 
-    # Instructions for the user
+    # Instructions and welcome message right under the title
     st.markdown("""
-    **Welcome to the Cheque Information Extraction App!**  
-    This app uses Gemini AI to analyze the image of a cheque and extract important information such as:
+    **Welcome to the Checkmate Cheque Information Extraction App!**  
+    This app uses **Gemini AI** to analyze the image of a cheque and extract important information such as:
 
     - Payee Name
     - Bank Name
     - Account Number
-    - Date
     - Cheque Number
     - Amount
-    - And other relevant information
+    - Date
+    - And other relevant details from the cheque image.
 
     **How to Use**:
     1. Upload an image of a cheque.
@@ -102,23 +102,27 @@ else:
             try:
                 result = model.generate_content([img, prompt])
 
-                # Log the full response object
-                st.write(result)  # Check the response object directly
+                # Access the text content directly (without the raw response)
+                if result.candidates:
+                    content = result.candidates[0].content["parts"][0].text
 
-                # Check if the response contains text
-                if result.text:
+                    # Display the extracted information as text
                     st.subheader("Extracted Information (Text):")
-                    st.write(result.text)
+                    st.write(content)
 
-                    extracted_info = parse_extracted_info(result.text)
+                    # Parse the extracted text into a structured format (dictionary)
+                    extracted_info = parse_extracted_info(content)
+
+                    # Display the extracted information as a table
                     st.subheader("Extracted Information (Table):")
                     st.table(extracted_info)
                 else:
-                    st.warning("No valid content returned from the model. Please try again.")
+                    st.warning("No content returned. Please try again with a different image.")
 
             except Exception as e:
                 st.error(f"Error generating content: {e}")
         else:
             st.error("Failed to load the image. Please try uploading again.")
+
     else:
         st.info("Please upload a cheque image to begin the analysis.")
