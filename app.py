@@ -100,5 +100,5 @@ st.markdown("""
       - Cheque Number
       - Amount and other details
     - For PDF files, each page will be processed individually.
-""") 
+""")
 
