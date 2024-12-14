@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import requests
 import io
 import cloudconvert  # CloudConvert SDK for conversion
-import zipfile  # Import zipfile module to handle ZIP files
+import zipfile  # To handle ZIP files
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,8 +29,8 @@ except KeyError as e:
 # Configure Google Gemini API with the key
 genai.configure(api_key=gemini_api_key)
 
-# Initialize CloudConvert client
-cloudconvert_client = cloudconvert.ApiClient(api_key=cloudconvert_api_token)
+# Initialize CloudConvert with API token
+cloudconvert.configure(api_key=cloudconvert_api_token)
 
 # Initialize the Generative Model
 model = genai.GenerativeModel('models/gemini-1.5-pro-001')
@@ -41,8 +41,8 @@ def convert_pdf_to_images(uploaded_file):
     with open("/tmp/tempfile.pdf", "wb") as f:
         f.write(uploaded_file.getvalue())
 
-    # Create a CloudConvert job to convert PDF to images
-    job = cloudconvert_client.jobs.create({
+    # Create a job for converting PDF to images using CloudConvert API
+    job = cloudconvert.Job.create({
         'tasks': {
             'import-1': {
                 'operation': 'import/upload'
@@ -51,7 +51,7 @@ def convert_pdf_to_images(uploaded_file):
                 'operation': 'convert',
                 'input': 'import-1',
                 'input_format': 'pdf',
-                'output_format': 'png',  # You can choose 'png' or 'jpg'
+                'output_format': 'png',
                 'engine': 'poppler'
             },
             'export-1': {
@@ -66,16 +66,16 @@ def convert_pdf_to_images(uploaded_file):
     upload_url = upload_task['result']['form']['url']
     file_form = upload_task['result']['form']
 
-    # Upload the PDF file
-    response = cloudconvert_client.files.upload(file_form, "/tmp/tempfile.pdf")
-    
-    # Check if the conversion is complete
+    # Upload the file to CloudConvert
+    response = cloudconvert.files.upload(file_form, "/tmp/tempfile.pdf")
+
+    # Check for conversion completion
     export_task = job['tasks'][2]
     download_url = export_task['result']['files'][0]['url']
-    
-    # Download the converted images (as a ZIP file)
-    img_data = cloudconvert_client.files.download(download_url)
-    
+
+    # Download the converted images (ZIP file)
+    img_data = cloudconvert.files.download(download_url)
+
     return img_data
 
 # Function to analyze and extract key details from the image using Gemini
