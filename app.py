@@ -90,8 +90,11 @@ else:
         if img:
             # Define the prompt for Gemini AI
             prompt = (
-                "Analyze and extract all information from image, including Payee Name, Bank Name, Account Number, "
-                "Date, Cheque Number, Amount, and all other information"
+                prompt = (
+    "Analyze this cheque image and extract the Payee Name, Bank Name, Account Number, Date, "
+    "Cheque Number, and Amount from the cheque."
+)
+
             )
 
             # Generate response from Gemini AI
