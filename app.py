@@ -1,170 +1,199 @@
-# Import necessary modules
-import bcrypt
-import re
-from datetime import datetime, timedelta
-import secrets
+import pickle
+from pathlib import Path
 import streamlit as st
-from pymongo import MongoClient
+import pandas as pd
+from dotenv import load_dotenv
+from PIL import Image
+import google.generativeai as genai
+import os
+from io import BytesIO
+import streamlit_authenticator as stauth
 
-# Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client["auth_db"]
-users_collection = db["users"]
+# --- Load Environment Variables ---
+load_dotenv()
 
-# Helper functions for authentication
-def hash_password(password):
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
-    return hashed_password
+# --- USER AUTHENTICATION ----
+names = ["Prateek Agarwal", "Anubhav"]
+usernames = ["Prateek", "Anubhav"]
 
-def verify_password(stored_hash, password):
-    return bcrypt.checkpw(password.encode('utf-8'), stored_hash)
+# Load hashed passwords (assuming hashed_pw.pkl is already generated separately)
+file_path = Path(__file__).parent / "hashed_pw.pkl"
 
-def check_user_exists(email):
-    user = users_collection.find_one({"email": email})
-    return user is not None
+# Ensure the file exists before trying to open it
+if not file_path.exists():
+    st.error("The file 'hashed_pw.pkl' does not exist. Please ensure you have generated the password file.")
+    st.stop()
 
-def add_user(email, password):
-    hashed_password = hash_password(password)
-    user = {
-        "email": email,
-        "password": hashed_password,
-        "reset_token": None,
-        "reset_token_expiry": None
-    }
-    users_collection.insert_one(user)
-
-def verify_user(email, password):
-    user = users_collection.find_one({"email": email})
-    if user and verify_password(user["password"], password):
-        return True
-    return False
-
-def generate_reset_token(email):
-    token = secrets.token_urlsafe(16)
-    expiration_time = datetime.utcnow() + timedelta(minutes=30)  # Token expires in 30 minutes
-    users_collection.update_one({"email": email}, {
-        "$set": {
-            "reset_token": token,
-            "reset_token_expiry": expiration_time
+# Load hashed passwords from the pickle file
+with file_path.open("rb") as file:
+    hashed_passwords = pickle.load(file)
+ 
+# Prepare credentials dictionary with email field included
+credentials = {
+    "usernames": {
+        "Prateek": {
+            "name": "Prateek Agarwal",
+            "password": hashed_passwords[0],
+            "email": "prateek@example.com"  # Add email field
+        },
+        "Anubhav": {
+            "name": "Anubhav",
+            "password": hashed_passwords[1],
+            "email": "anubhav@example.com"  # Add email field
         }
-    })
-    return token
+    }
+}
 
-def validate_reset_token(email, token):
-    user = users_collection.find_one({"email": email})
-    if user and user.get("reset_token") == token:
-        if datetime.utcnow() < user["reset_token_expiry"]:
-            return True
-    return False
+# Instantiate the authenticator object
+authenticator = stauth.Authenticate(
+    credentials,  # Pass credentials as a dictionary
+    cookie_name="sales_dashboard",  # Cookie name for session management
+    key="abcdef",  # Secret key for encryption
+    cookie_expiry_days=7  # Expiry days for the cookie
+)
 
-def is_valid_email(email):
-    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    return re.match(email_regex, email) is not None
+# --- Perform the login process ---
+login_result = authenticator.login('main')
 
-# Initialize session state variables
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "home"
+# Check if login_result is None or contains incorrect values
+if login_result is None:
+    st.warning("Please enter your username and password")
+elif login_result == False:
+    st.error("Username/Password is incorrect")
+else:
+    # When login is successful, unpack the values
+    name, authentication_status, username = login_result
+    if authentication_status:
+        # User is authenticated
+        authenticator.logout("Logout", location="main")
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+        # --- Fetch Gemini API key from secrets or environment variables ---
+        api_key = st.secrets.get("GEMINI", {}).get("API_KEY") or os.getenv("GEMINI_API_KEY")
 
-def go_to_page(page_name):
-    st.session_state.current_page = page_name
+        if not api_key:
+            st.error("API Key is missing! Please set the GEMINI_API_KEY in Streamlit Secrets or .env file.")
+        else:
+            # Configure Gemini API
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("models/gemini-1.5-pro-001")
 
-def update_title(title):
-    st.markdown(f"<h1 style='text-align: center;'>{title}</h1>", unsafe_allow_html=True)
+            # --- Main App ---
+            st.title("Cheque Information Extraction with Gemini AI")
 
-# Main application logic
-if st.session_state.current_page == "home":
-    update_title("Gemini - User Authentication")
+            st.markdown("""**Upload a cheque image to extract key details.**
+            This tool uses AI to extract:
+            - Payee Name
+            - Bank Name
+            - Account Number
+            - Date
+            - Cheque Number
+            - Amount  
 
-    # Sidebar for navigation
-    option = st.sidebar.selectbox("Choose an action", ("Sign Up", "Log In"))
+            After extraction, download the data as a CSV file.""")
 
-    # Sign Up
-    if option == "Sign Up":
-        st.subheader("Create an Account")
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
+            # File uploader
+            uploaded_file = st.file_uploader("Upload a cheque image", type=["jpg", "jpeg", "png"])
 
-        if st.button("Sign Up"):
-            if email and password:
-                if not is_valid_email(email):
-                    st.error("Invalid email address.")
-                elif len(password) < 8:
-                    st.error("Password must be at least 8 characters.")
-                elif password != confirm_password:
-                    st.error("Passwords do not match.")
-                elif check_user_exists(email):
-                    st.error("Email already registered.")
+            if uploaded_file:
+                # Display uploaded image
+                st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+
+                # Load image function
+                def load_image(image):
+                    try:
+                        return Image.open(image)
+                    except Exception as e:
+                        st.error(f"Error loading image: {e}")
+                        return None
+
+                img = load_image(uploaded_file)
+
+                if img:
+                    # Define the prompt for Gemini AI
+                    prompt = (
+                        "Analyze this cheque image and extract the Payee Name, Bank Name, Account Number, "
+                        "Date, Cheque Number, and Amount."
+                    )
+
+                    # Call Gemini AI
+                    try:
+                        result = model.generate_content([img, prompt])
+
+                        if result.text:
+                            # Display raw extracted text
+                            st.subheader("Extracted Information (Text):")
+                            st.write(result.text)
+
+                            # Parse extracted text into structured data
+                            def parse_extracted_info(extracted_text):
+                                fields = {
+                                    "Payee Name": None,
+                                    "Bank Name": None,
+                                    "Account Number": None,
+                                    "Cheque Number": None,
+                                    "Amount": None,
+                                    "Date": None,
+                                }
+                                lines = extracted_text.split("\n")
+                                for line in lines:
+                                    for field in fields.keys():
+                                        if field in line:
+                                            fields[field] = line.split(":")[-1].strip()
+                                return fields
+
+                            extracted_info = parse_extracted_info(result.text)
+
+                            # Convert to DataFrame
+                            df = pd.DataFrame([extracted_info])
+
+                            # Display structured data
+                            st.subheader("Extracted Information (Table):")
+                            st.table(df)
+
+                            # CSV download functionality
+                            def convert_df_to_csv(df):
+                                csv_buffer = BytesIO()
+                                df.to_csv(csv_buffer, index=False)
+                                csv_buffer.seek(0)
+                                return csv_buffer.getvalue()
+
+                            csv_data = convert_df_to_csv(df)
+
+                            # Add download button
+                            st.subheader("Download Extracted Information:")
+                            st.download_button(
+                                label="Download as CSV",
+                                data=csv_data,
+                                file_name="cheque_extracted_info.csv",
+                                mime="text/csv",
+                            )
+
+                            # Footer with copyright notice (shown after the CSV download)
+                            footer = """
+                                <style>
+                                    footer {
+                                        position: fixed;
+                                        bottom: 0;
+                                        width: 100%;
+                                        background-color: #f1f1f1;
+                                        text-align: center;
+                                        padding: 10px;
+                                        font-size: 12px;
+                                        color: #888;
+                                    }
+                                </style>
+                                <div class="footer">
+                                    &copy; 2024 Anshuman Tiwari. All rights reserved.
+                                </div>
+                            """
+                            # Inject the footer HTML at the bottom of the page
+                            st.markdown(footer, unsafe_allow_html=True)
+
+                        else:
+                            st.warning("The AI did not return any content. Please try again.")
+                    except Exception as e:
+                        st.error(f"Error generating content: {e}")
                 else:
-                    add_user(email, password)
-                    st.success("Account created successfully!")
+                    st.error("Failed to load the image. Please try again.")
             else:
-                st.error("Please fill all fields.")
-
-    # Log In
-    elif option == "Log In":
-        st.subheader("Log In")
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
-
-        if st.button("Log In"):
-            if email and password:
-                if verify_user(email, password):
-                    st.success("Login successful!")
-                    st.session_state.logged_in = True
-                    st.session_state.email = email
-                    go_to_page("dashboard")  # Redirect to dashboard after login
-                else:
-                    st.error("Invalid email or password.")
-            else:
-                st.error("Please fill in all fields.")
-
-        # Forgot Password
-        if st.button("Forgot Password?"):
-            st.subheader("Reset Password")
-
-            email_for_reset = st.text_input("Enter your email to request reset token")
-
-            if st.button("Request Reset Link"):
-                if email_for_reset:
-                    if check_user_exists(email_for_reset):
-                        token = generate_reset_token(email_for_reset)
-                        st.success(f"Reset token generated! (Token: {token})")
-                        st.info("Use this token to reset your password.")
-                    else:
-                        st.error("Email not found.")
-                else:
-                    st.error("Please enter your email.")
-
-            token = st.text_input("Enter reset token")
-            new_password = st.text_input("Enter new password", type="password")
-
-            if st.button("Reset Password"):
-                if email_for_reset and token and new_password:
-                    if validate_reset_token(email_for_reset, token):
-                        hashed_password = hash_password(new_password)
-                        users_collection.update_one({"email": email_for_reset}, {
-                            "$set": {
-                                "password": hashed_password,
-                                "reset_token": None,
-                                "reset_token_expiry": None
-                            }
-                        })
-                        st.success("Password reset successfully!")
-                    else:
-                        st.error("Invalid or expired token.")
-                else:
-                    st.error("Please fill in all fields.")
-
-# Dashboard Page (Post-login)
-elif st.session_state.current_page == "dashboard":
-    update_title("Dashboard")
-    st.success(f"Welcome, {st.session_state.email}!")
-    if st.button("Log Out"):
-        st.session_state.logged_in = False
-        st.session_state.email = None
-        go_to_page("home")
+                st.info("Please upload a cheque image to begin the analysis.")
