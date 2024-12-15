@@ -60,7 +60,7 @@ location = "main"  # Use 'main' for default login location
 # Debugging print for location
 st.write(f"Login location: {location}")  # This is for debugging
 
-name, authentication_status, username = authenticator.login("Login", location)
+name, authentication_status, username = authenticator.login('main')
 
 # --- Handle authentication status ---
 if authentication_status == False:
