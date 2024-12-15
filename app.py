@@ -26,6 +26,9 @@ if not file_path.exists():
 with file_path.open("r") as file:
     credentials_data = json.load(file)
 
+# Debugging: Check what is inside credentials_data
+st.write("Credentials data loaded:", credentials_data)
+
 # Prepare the credentials dictionary with email field included
 credentials = {
     "usernames": {
@@ -48,6 +51,9 @@ authenticator = stauth.Authenticate(
 
 # --- Perform the login process ---
 login_result = authenticator.login('main')
+
+# Debugging: Print login result
+st.write("Login result:", login_result)
 
 # Check if login_result is None or contains incorrect values
 if login_result is None:
@@ -74,8 +80,7 @@ else:
             # --- Main App ---
             st.title("Cheque Information Extraction with Gemini AI")
 
-            st.markdown("""
-            **Upload a cheque image to extract key details.**
+            st.markdown("""**Upload a cheque image to extract key details.**
             This tool uses AI to extract:
             - Payee Name
             - Bank Name
@@ -84,8 +89,7 @@ else:
             - Cheque Number
             - Amount  
 
-            After extraction, download the data as a CSV file.
-            """)
+            After extraction, download the data as a CSV file.""")
 
             # File uploader
             uploaded_file = st.file_uploader("Upload a cheque image", type=["jpg", "jpeg", "png"])
