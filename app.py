@@ -28,9 +28,14 @@ else:
 
 # Instantiate the authenticator object
 authenticator = stauth.Authenticate(
-    names, usernames, hashed_passwords,
-    cookie_name="sales_dashboard", key="abcdef", cookie_expiry_days=7
+    names=names,
+    usernames=usernames,
+    password_hashes=hashed_passwords,
+    cookie_name="sales_dashboard",  # Session cookie name
+    key="abcdef",                   # Key for the session cookies
+    cookie_expiry_days=7            # Expiry time for the session cookies
 )
+
 
 # Perform the login process
 name, authentication_status, username = authenticator.login("Login", "main")
