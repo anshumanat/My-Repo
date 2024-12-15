@@ -43,9 +43,6 @@ credentials = {
 # Instantiate the authenticator object
 authenticator = stauth.Authenticate(
     credentials=credentials,           # Provide the credentials dictionary
-    cookie_name="sales_dashboard",     # Session cookie name
-    key="abcdef",                      # Key for the session cookies
-    cookie_expiry_days=7               # Expiry time for the session cookies
 )
 
 # Perform the login process
