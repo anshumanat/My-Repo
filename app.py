@@ -6,7 +6,7 @@ from PIL import Image
 import google.generativeai as genai
 import os
 from io import BytesIO
-import streamlit_authenticator as stauth  # Make sure this is correctly imported
+import streamlit_authenticator as stauth
 
 # --- Load Environment Variables ---
 load_dotenv()
@@ -34,11 +34,18 @@ def hash_passwords(passwords):
 # Hash the passwords
 hashed_passwords = hash_passwords(passwords)
 
-# Create the credentials dictionary
+# Create the credentials dictionary in the expected structure
 credentials = {
-    "names": names,
-    "usernames": usernames,
-    "passwords": hashed_passwords
+    "usernames": {
+        "johndoe": {
+            "name": "John Doe",
+            "password": hashed_passwords[0],
+        },
+        "janesmith": {
+            "name": "Jane Smith",
+            "password": hashed_passwords[1],
+        },
+    }
 }
 
 # Initialize the authenticator
