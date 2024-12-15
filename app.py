@@ -1,152 +1,144 @@
 import streamlit as st
-import os
+import streamlit_authenticator as stauth
 from dotenv import load_dotenv
+import os
+import pandas as pd
 from PIL import Image
-import google.generativeai as genai  # Correct import for Google Gemini API
-import base64
+import google.generativeai as genai
 from io import BytesIO
 
-# Load environment variables from the .env file
+# Load environment variables
 load_dotenv()
 
 # Fetch the Gemini API key from Streamlit secrets
 api_key = st.secrets["GEMINI"]["API_KEY"]
 
-# Ensure the API key is loaded correctly
 if not api_key:
     st.error("API Key is missing! Please set the GEMINI_API_KEY in Streamlit Secrets.")
 else:
-    # Configure the Gemini API with the retrieved key
     genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("models/gemini-1.5-pro-001")
 
-    # Initialize the Gemini model (update the model name if necessary)
-    model = genai.GenerativeModel('models/gemini-1.5-pro-001')
+# --- Authentication Setup ---
+names = ["John Doe", "Jane Smith"]
+usernames = ["johndoe", "janesmith"]
+passwords = ["password123", "securepassword456"]
+hashed_passwords = stauth.Hasher(passwords).generate()
 
-    # Function to load and process images
-    def load_image(image):
-        try:
-            return Image.open(image)
-        except Exception as e:
-            st.error(f"Error loading image: {e}")
-            return None
+authenticator = stauth.Authenticate(
+    names,
+    usernames,
+    hashed_passwords,
+    "cheque_app_cookie",
+    "some_random_signature_key",
+    cookie_expiry_days=7,
+)
 
-    # Function to convert image to base64 (if necessary)
-    def image_to_base64(image):
-        buffered = BytesIO()
-        image.save(buffered, format="PNG")
-        return base64.b64encode(buffered.getvalue()).decode('utf-8')
+# Login widget
+name, authentication_status, username = authenticator.login("Login", "main")
 
-    # Function to parse extracted text into a structured format (like a dictionary)
-    def parse_extracted_info(extracted_text):
-        extracted_info = {
-            "Payee Name": None,
-            "Bank Name": None,
-            "Account Number": None,
-            "Cheque Number": None,
-            "Amount": None,
-            "Date": None
-        }
+if authentication_status:
+    st.sidebar.success(f"Welcome {name}!")
+    authenticator.logout("Logout", "sidebar")
 
-        lines = extracted_text.split("\n")
-        for line in lines:
-            if "Payee" in line:
-                extracted_info["Payee Name"] = line.split(":")[-1].strip()
-            elif "Bank" in line:
-                extracted_info["Bank Name"] = line.split(":")[-1].strip()
-            elif "Account Number" in line:
-                extracted_info["Account Number"] = line.split(":")[-1].strip()
-            elif "Cheque Number" in line:
-                extracted_info["Cheque Number"] = line.split(":")[-1].strip()
-            elif "Amount" in line:
-                extracted_info["Amount"] = line.split(":")[-1].strip()
-            elif "Date" in line:
-                extracted_info["Date"] = line.split(":")[-1].strip()
+    # --- Main App: Cheque Information Extraction ---
+    st.title("Cheque Information Extraction with Gemini AI")
 
-        return extracted_info
-
-    # Streamlit app UI
-    st.title("Checkmate: Cheque Information Extraction with Gemini AI")
-
-    # Instructions and welcome message right under the title
     st.markdown("""
-    **Welcome to the Checkmate Cheque Information Extraction App!**  
-    This app uses **Gemini AI** to analyze the image of a cheque and extract important information such as:
+        **Welcome to the Cheque Information Extraction App!**  
+        Upload a cheque image to extract details such as:
+        - Payee Name
+        - Bank Name
+        - Account Number
+        - Date
+        - Cheque Number
+        - Amount
 
-    - Payee Name
-    - Bank Name
-    - Account Number
-    - Cheque Number
-    - Amount
-    - Date
-    - And other relevant details from the cheque image.
-
-    **How to Use**:
-    1. Upload an image of a cheque.
-    2. The app will analyze the image and display the extracted information on the screen.
-    3. You can then view the information in the results section.
-
-    **Supported File Types**: JPG, JPEG, PNG.
+        After extraction, you can download the results as a CSV file.
     """)
 
-    # File uploader widget for the user to upload an image
-    uploaded_file = st.file_uploader("Choose a cheque image...", type=["jpg", "jpeg", "png"])
-
-    # Check if the file is uploaded
-    if uploaded_file is not None:
-        # Display the uploaded image
+    # File uploader
+    uploaded_file = st.file_uploader("Upload a cheque image", type=["jpg", "jpeg", "png"])
+    
+    if uploaded_file:
         st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
-        # Load the image
+        # Load and process image
+        def load_image(image):
+            try:
+                return Image.open(image)
+            except Exception as e:
+                st.error(f"Error loading image: {e}")
+                return None
+
         img = load_image(uploaded_file)
 
-        # Check if the image is loaded successfully
         if img:
-            # Convert the image to base64 if necessary
-            img_base64 = image_to_base64(img)
-
-            # Define the prompt for Gemini AI
+            # Prompt for Gemini AI
             prompt = (
-                "Extract the Payee Name, Bank Name, Account Number, Date, Cheque Number, and Amount from this cheque image."
+                "Analyze this cheque image and extract the Payee Name, Bank Name, Account Number, Date, "
+                "Cheque Number, and Amount."
             )
 
-            # Generate response from Gemini AI
             try:
-                # Here we are passing the base64 encoded image
-                result = model.generate_content([img_base64, prompt])
+                result = model.generate_content([img, prompt])
 
-                # Print the result to check the structure (debugging purpose)
-                st.write("Full Response from Gemini:")
-                st.json(result)
-
-                # Check if result.candidates contains any response
-                if result.candidates:
-                    # Assuming the correct way to access the content after inspecting the response
-                    content = result.candidates[0].content
-
-                    # If content contains parts, extract the text from them
-                    if content and 'parts' in content:
-                        content_text = content['parts'][0]['text']
-                    else:
-                        content_text = "Content not available in the expected format."
-
-                    # Display the extracted information as text
+                if result.text:
                     st.subheader("Extracted Information (Text):")
-                    st.write(content_text)
+                    st.write(result.text)
 
-                    # Parse the extracted text into a structured format (dictionary)
-                    extracted_info = parse_extracted_info(content_text)
+                    # Parse extracted text
+                    def parse_extracted_info(extracted_text):
+                        fields = {
+                            "Payee Name": None,
+                            "Bank Name": None,
+                            "Account Number": None,
+                            "Cheque Number": None,
+                            "Amount": None,
+                            "Date": None,
+                        }
+                        lines = extracted_text.split("\n")
+                        for line in lines:
+                            for field in fields.keys():
+                                if field in line:
+                                    fields[field] = line.split(":")[-1].strip()
+                        return fields
 
-                    # Display the extracted information as a table
+                    extracted_info = parse_extracted_info(result.text)
+
+                    # Display parsed data as a table
                     st.subheader("Extracted Information (Table):")
                     st.table(extracted_info)
 
-                else:
-                    st.warning("No content returned. Please try again with a different image.")
+                    # Convert extracted info to a Pandas DataFrame
+                    df = pd.DataFrame([extracted_info])
 
+                    # Download as CSV
+                    def convert_df_to_csv(df):
+                        csv_buffer = BytesIO()
+                        df.to_csv(csv_buffer, index=False)
+                        csv_buffer.seek(0)
+                        return csv_buffer.getvalue()
+
+                    csv_data = convert_df_to_csv(df)
+
+                    st.subheader("Download Extracted Information:")
+                    st.download_button(
+                        label="Download CSV",
+                        data=csv_data,
+                        file_name="cheque_extracted_info.csv",
+                        mime="text/csv",
+                    )
+                else:
+                    st.warning("No valid content returned from the model. Please try again.")
             except Exception as e:
                 st.error(f"Error generating content: {e}")
         else:
-            st.error("Failed to load the image. Please try uploading again.")
-
+            st.error("Failed to load the image.")
     else:
         st.info("Please upload a cheque image to begin the analysis.")
+
+elif authentication_status == False:
+    st.error("Invalid username or password")
+else:
+    st.warning("Please log in to access the app.")
