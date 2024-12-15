@@ -13,6 +13,8 @@ from pathlib import Path
 load_dotenv()
 
 # --- USER AUTHENTICATION ----
+names = ["Prateek Agarwal", "Anubhav"]
+usernames = ["Prateek", "Anubhav"]
 
 # Load hashed passwords from JSON file
 file_path = Path(__file__).parent / "hashed_pw.json"  # Use the JSON file instead of pickle
