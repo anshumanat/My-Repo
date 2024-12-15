@@ -21,6 +21,27 @@ else:
 
 # --- Main App ---
 st.title("Cheque Information Extraction with Gemini AI")
+# Add the copyright notice in the footer
+footer = """
+    <style>
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f1f1f1;
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+    <div class="footer">
+        &copy; 2024 Anshuman Tiwari. All rights reserved.
+    </div>
+    """
+
+# Inject the footer HTML at the bottom of the page
+st.markdown(footer, unsafe_allow_html=True)
 
 st.markdown("""**Upload a cheque image to extract key details.**
 This tool uses AI to extract:
