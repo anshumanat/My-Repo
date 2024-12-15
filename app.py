@@ -26,7 +26,7 @@ authenticator = stauth.Authenticate(names, usernames, hashed_passwords,
                                    "sales_dashboard", "abcdef", cookie_expiry_days=7)
 
 # Perform the login process
-name, authentication_status, username = authenticator.login("Login", "Main")
+name, authentication_status, username = authenticator.login("Login", "main")
 
 # Handle authentication status
 if authentication_status == False:
