@@ -29,21 +29,30 @@ if not file_path.exists():
 with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
 
+# Debugging: Print the content of the loaded file
+st.write("Loaded hashed_passwords:", hashed_passwords)
+
 # --- Prepare credentials dictionary ---
-# Assuming the structure in the loaded hashed_passwords is something like:
-# hashed_passwords = {"Prateek": {"password": "hashed_password"}, "Anubhav": {"password": "hashed_password"}}
+# Check if the structure is as expected, otherwise raise an error
+if isinstance(hashed_passwords, dict):
+    if "Prateek" not in hashed_passwords or "Anubhav" not in hashed_passwords:
+        st.error("Missing 'Prateek' or 'Anubhav' in the loaded credentials.")
+        st.stop()
+else:
+    st.error("The pickled file does not contain a dictionary as expected.")
+    st.stop()
 
 # Prepare credentials dictionary with email field included
 credentials = {
     "usernames": {
         "Prateek": {
             "name": "Prateek Agarwal",
-            "password": hashed_passwords["Prateek"]["password"],  # Access password correctly using the username as key
+            "password": hashed_passwords["Prateek"],  # Directly use the password hash here
             "email": "prateek@example.com"  # Add email field
         },
         "Anubhav": {
             "name": "Anubhav",
-            "password": hashed_passwords["Anubhav"]["password"],  # Access password correctly using the username as key
+            "password": hashed_passwords["Anubhav"],  # Directly use the password hash here
             "email": "anubhav@example.com"  # Add email field
         }
     }
