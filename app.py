@@ -42,15 +42,37 @@ authenticator = stauth.Authenticate(
 # --- Login/Logout ---
 name, authentication_status, username = authenticator.login("Login", "main")
 
+# --- Admin Access ---
+admin_password = st.secrets["general"]["password"]  # Fetch admin password from secrets
+
+# Function to check admin password
+def check_admin_password():
+    input_password = st.text_input("Enter admin password:", type="password")
+    if input_password == admin_password:
+        st.session_state["is_admin"] = True
+        st.success("Admin access granted!")
+    else:
+        st.session_state["is_admin"] = False
+        st.warning("Incorrect password. Admin access denied.")
+
+# --- Admin Section ---
 if authentication_status:
     st.sidebar.success(f"Welcome {name}!")
     authenticator.logout("Logout", "sidebar")
 
+    # Admin access (only for authenticated users)
+    if st.session_state.get("is_admin", False):
+        st.title("Admin Panel")
+        st.markdown("Welcome to the Admin Panel! You can manage or view admin-level functionality here.")
+        # You can add admin functionality here, e.g., data management, system settings, etc.
+    else:
+        # Ask for admin password only if the user is logged in
+        check_admin_password()
+
     # --- Main App ---
     st.title("Cheque Information Extraction with Gemini AI")
 
-    st.markdown("""
-    **Upload a cheque image to extract key details.**  
+    st.markdown("""**Upload a cheque image to extract key details.**
     This tool uses AI to extract:
     - Payee Name
     - Bank Name
@@ -59,8 +81,7 @@ if authentication_status:
     - Cheque Number
     - Amount  
 
-    After extraction, download the data as a CSV file.
-    """)
+    After extraction, download the data as a CSV file.""")
 
     # File uploader
     uploaded_file = st.file_uploader("Upload a cheque image", type=["jpg", "jpeg", "png"])
@@ -69,7 +90,7 @@ if authentication_status:
         # Display uploaded image
         st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
-        # Load image
+        # Load image function
         def load_image(image):
             try:
                 return Image.open(image)
