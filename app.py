@@ -8,8 +8,6 @@ import os
 from io import BytesIO
 import streamlit_authenticator as stauth  # Make sure this is correctly imported
 
-
-
 # --- Load Environment Variables ---
 load_dotenv()
 
@@ -36,12 +34,16 @@ def hash_passwords(passwords):
 # Hash the passwords
 hashed_passwords = hash_passwords(passwords)
 
+# Create the credentials dictionary
+credentials = {
+    "names": names,
+    "usernames": usernames,
+    "passwords": hashed_passwords
+}
+
 # Initialize the authenticator
-from streamlit_authenticator import Authenticate
-authenticator = Authenticate(
-    names=names,
-    usernames=usernames,
-    passwords=hashed_passwords,
+authenticator = stauth.Authenticate(
+    credentials=credentials,   # Pass the credentials dictionary
     cookie_name="cheque_app_cookie",
     key="some_random_signature_key",
     cookie_expiry_days=7,
