@@ -26,14 +26,26 @@ else:
     with file_path.open("rb") as file:
         hashed_passwords = pickle.load(file)
 
+# Construct the credentials dictionary for the authenticator
+credentials = {
+    "usernames": {
+        "Prateek": {
+            "name": "Prateek Agarwal",
+            "password": hashed_passwords[0],  # The first hashed password
+        },
+        "Anubhav": {
+            "name": "Anubhav",
+            "password": hashed_passwords[1],  # The second hashed password
+        },
+    }
+}
+
 # Instantiate the authenticator object
 authenticator = stauth.Authenticate(
-    names=names,
-    usernames=usernames,
-    password_hashes=hashed_passwords,
-    cookie_name="sales_dashboard",  # Session cookie name
-    key="abcdef",                   # Key for the session cookies
-    cookie_expiry_days=7            # Expiry time for the session cookies
+    credentials=credentials,           # Provide the credentials dictionary
+    cookie_name="sales_dashboard",     # Session cookie name
+    key="abcdef",                      # Key for the session cookies
+    cookie_expiry_days=7               # Expiry time for the session cookies
 )
 
 # Perform the login process
@@ -180,3 +192,4 @@ if authentication_status:
                 st.error("Failed to load the image. Please try again.")
         else:
             st.info("Please upload a cheque image to begin the analysis.")
+
