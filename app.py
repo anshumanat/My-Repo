@@ -6,7 +6,8 @@ from PIL import Image
 import google.generativeai as genai
 import os
 from io import BytesIO
-from streamlit_authenticator import Authenticate
+import streamlit_authenticator as stauth  # Make sure this is correctly imported
+
 
 
 # --- Load Environment Variables ---
