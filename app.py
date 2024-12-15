@@ -1,5 +1,5 @@
 import streamlit as st
-import streamlit_authenticator as stauth
+import bcrypt
 import pandas as pd
 from dotenv import load_dotenv
 from PIL import Image
@@ -26,11 +26,16 @@ names = ["John Doe", "Jane Smith"]
 usernames = ["johndoe", "janesmith"]
 passwords = ["password123", "securepassword456"]
 
-# Hash passwords
-hashed_passwords = stauth.Hasher(passwords).hash()
+# Hash passwords manually using bcrypt
+def hash_passwords(passwords):
+    return [bcrypt.hashpw(p.encode('utf-8'), bcrypt.gensalt()).decode('utf-8') for p in passwords]
+
+# Hash the passwords
+hashed_passwords = hash_passwords(passwords)
 
 # Initialize the authenticator
-authenticator = stauth.Authenticate(
+from streamlit_authenticator import Authenticate
+authenticator = Authenticate(
     names=names,
     usernames=usernames,
     passwords=hashed_passwords,
