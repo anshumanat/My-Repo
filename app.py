@@ -49,7 +49,7 @@ authenticator = stauth.Authenticate(
 )
 
 # Perform the login process
-name, authentication_status, username = authenticator.login("Login", "main")
+name, authentication_status, username = authenticator.login("Login", "sidebar")
 
 # Handle authentication status
 if authentication_status == False:
