@@ -1,3 +1,4 @@
+streamlit_authenticator
 google-generativeai
 streamlit
 pillow
