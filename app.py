@@ -31,11 +31,18 @@ with file_path.open("rb") as file:
 # Debugging print for hashed_passwords
 st.write(f"Hashed passwords loaded: {hashed_passwords}")  # This is for debugging
 
-# Prepare credentials dictionary
+# Prepare credentials dictionary in the expected structure
 credentials = {
-    "names": names,
-    "usernames": usernames,
-    "hashed_passwords": hashed_passwords,
+    "usernames": {
+        "Prateek": {
+            "name": "Prateek Agarwal",
+            "password": hashed_passwords[0]
+        },
+        "Anubhav": {
+            "name": "Anubhav",
+            "password": hashed_passwords[1]
+        }
+    }
 }
 
 # Instantiate the authenticator object
