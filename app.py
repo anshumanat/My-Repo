@@ -16,51 +16,52 @@ load_dotenv()
 names = ["Prateek Agarwal", "Anubhav"]
 usernames = ["Prateek", "Anubhav"]
 
-# Load hashed_passwords from the saved file
+# Load hashed passwords (assuming hashed_pw.pkl is already generated separately)
 file_path = Path(__file__).parent / "hashed_pw.pkl"
 
-# Check if the file exists
+# Ensure the file exists before trying to open it
 if not file_path.exists():
-    st.error(f"File {file_path} not found. Please ensure hashed_pw.pkl exists.")
-else:
-    with file_path.open("rb") as file:
-        hashed_passwords = pickle.load(file)
+    st.error("The file 'hashed_pw.pkl' does not exist. Please ensure you have generated the password file.")
+    st.stop()
 
-# Construct the credentials dictionary for the authenticator
-credentials = {
-    "usernames": {
-        "Prateek": {
-            "name": "Prateek Agarwal",
-            "password": hashed_passwords[0],  # The first hashed password
-        },
-        "Anubhav": {
-            "name": "Anubhav",
-            "password": hashed_passwords[1],  # The second hashed password
-        },
-    }
-}
+# Load hashed passwords from the pickle file
+with file_path.open("rb") as file:
+    hashed_passwords = pickle.load(file)
+
+# Debugging print for hashed_passwords
+st.write(f"Hashed passwords loaded: {hashed_passwords}")  # This is for debugging
 
 # Instantiate the authenticator object
 authenticator = stauth.Authenticate(
-    credentials=credentials,           # Provide the credentials dictionary
+    names, 
+    usernames, 
+    hashed_passwords,
+    cookie_name="sales_dashboard",
+    key="abcdef",
+    cookie_expiry_days=7
 )
 
-# Perform the login process
-location = "main"
-name, authentication_status, username = authenticator.login("Login", "location")
+# --- Perform the login process ---
+# Specify location for the login form (could be 'main', 'sidebar', or 'unrendered')
+location = "main"  # Use 'main' for default login location
 
-# Handle authentication status
+# Debugging print for location
+st.write(f"Login location: {location}")  # This is for debugging
+
+name, authentication_status, username = authenticator.login("Login", location)
+
+# --- Handle authentication status ---
 if authentication_status == False:
     st.error("Username/Password is incorrect")
 elif authentication_status == None:
     st.warning("Please enter your username and password")
 
-# Proceed with the app only if authentication is successful
+# --- Proceed with the app only if authentication is successful ---
 if authentication_status:
     # Display a logout button
-    authenticator.logout("Logout", "main")  # This will add the logout button
+    authenticator.logout("Logout", location)
 
-    # Fetch Gemini API key from secrets or environment variables
+    # --- Fetch Gemini API key from secrets or environment variables ---
     api_key = st.secrets.get("GEMINI", {}).get("API_KEY") or os.getenv("GEMINI_API_KEY")
 
     if not api_key:
