@@ -125,7 +125,7 @@ if uploaded_file:
                         }
                     </style>
                     <div class="footer">
-                        &copy; 2024 Your Company Name. All rights reserved.
+                        &copy; 2024 Anshuman Tiwari. All rights reserved.
                     </div>
                 """
                 # Inject the footer HTML at the bottom of the page
