@@ -28,17 +28,19 @@ if not file_path.exists():
 with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
 
+st.write(hashed_passwords)
+
 # Prepare credentials dictionary with email field included
 credentials = {
     "usernames": {
         "Prateek": {
             "name": "Prateek Agarwal",
-            "password": hashed_passwords[Prateek],
+            "password": hashed_passwords[0],
             "email": "prateek@example.com"  # Add email field
         },
         "Anubhav": {
             "name": "Anubhav",
-            "password": hashed_passwords[Anubhav],
+            "password": hashed_passwords[1],
             "email": "anubhav@example.com"  # Add email field
         }
     }
