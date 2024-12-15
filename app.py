@@ -27,10 +27,7 @@ if not file_path.exists():
 # Load hashed passwords from the pickle file
 with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
-
-# Debugging print for hashed_passwords
-st.write(f"Hashed passwords loaded: {hashed_passwords}")  # This is for debugging
-
+ 
 # Prepare credentials dictionary with email field included
 credentials = {
     "usernames": {
