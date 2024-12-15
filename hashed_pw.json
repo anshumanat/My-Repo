@@ -1,12 +1,12 @@
 {
     "Prateek": {
         "name": "Prateek Agarwal",
-        "password": "hashed_password_1",
+        "password": "$2b$12$A7mDQNm3kiknivKgWhCMMetHNWAK6YJYK636RAt.Qnf20PBMQ6fiK",
         "email": "prateek@example.com"
     },
     "Anubhav": {
         "name": "Anubhav",
-        "password": "hashed_password_2",
+        "password": "$2b$12$uj0OKJP4PFUJVheB6Z/COOxw3U5I23ArjUTUS9n3doFUpvIs1aemG",
         "email": "anubhav@example.com"
     }
 }
