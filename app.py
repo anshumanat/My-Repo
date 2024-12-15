@@ -1,13 +1,12 @@
 import streamlit as st
-import bcrypt
+import streamlit_authenticator as stauth
 import pandas as pd
 from dotenv import load_dotenv
 from PIL import Image
 import google.generativeai as genai
 import os
 from io import BytesIO
-import yaml
-import streamlit_authenticator as stauth
+import bcrypt
 
 # --- Load Environment Variables ---
 load_dotenv()
@@ -28,51 +27,20 @@ names = ["John Doe", "Jane Smith"]
 usernames = ["johndoe", "janesmith"]
 passwords = ["password123", "securepassword456"]
 
-# Hash passwords manually using bcrypt
-def hash_passwords(passwords):
-    return [bcrypt.hashpw(p.encode('utf-8'), bcrypt.gensalt()).decode('utf-8') for p in passwords]
-
-# Hash the passwords
-hashed_passwords = hash_passwords(passwords)
-
-# Create the credentials dictionary in the expected structure
-credentials = {
-    "usernames": {
-        "johndoe": {
-            "name": "John Doe",
-            "password": hashed_passwords[0],
-        },
-        "janesmith": {
-            "name": "Jane Smith",
-            "password": hashed_passwords[1],
-        },
-    }
-}
-
-# --- Load YAML Configuration ---
-# For this example, we're just using a dictionary, but you can also load it from a YAML file if needed.
-config = {
-    'credentials': credentials,
-    'cookie': {
-        'expiry_days': 30,
-        'key': "some_random_signature_key",
-        'name': "random_cookie_name"
-    },
-    'preauthorized': {
-        'emails': ['admin@example.com']  # Optional, for pre-authorized users
-    }
-}
+# Hash passwords using bcrypt
+hashed_passwords = [bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8') for password in passwords]
 
 # Initialize the authenticator
 authenticator = stauth.Authenticate(
-    credentials=config['credentials'],  # Pass the credentials dictionary
-    cookie_name=config['cookie']['name'],
-    key=config['cookie']['key'],
-    cookie_expiry_days=config['cookie']['expiry_days'],
+    names=names,
+    usernames=usernames,
+    passwords=hashed_passwords,
+    cookie_name="cheque_app_cookie",
+    key="some_random_signature_key",
+    cookie_expiry_days=7,
 )
 
 # --- Login/Logout ---
-# Update this line to use 'main' as the location
 name, authentication_status, username = authenticator.login("Login", "main")
 
 # --- Admin Access ---
@@ -93,22 +61,11 @@ if authentication_status:
     st.sidebar.success(f"Welcome {name}!")
     authenticator.logout("Logout", "sidebar")
 
-    # User-specific content based on the username
-    if username == "johndoe":
-        st.title("John's Content")
-        st.write(f"Welcome {name}, you have access to this content.")
-        # You can add John-specific content here
-    elif username == "janesmith":
-        st.title("Jane's Content")
-        st.write(f"Welcome {name}, you have access to this content.")
-        # You can add Jane-specific content here
-
     # Admin access (only for authenticated users)
     if st.session_state.get("is_admin", False):
         st.title("Admin Panel")
         st.markdown("Welcome to the Admin Panel! You can manage or view admin-level functionality here.")
-        # Admin functionality can go here
-
+        # You can add admin functionality here, e.g., data management, system settings, etc.
     else:
         # Ask for admin password only if the user is logged in
         check_admin_password()
