@@ -1,0 +1,12 @@
+{
+    "Prateek": {
+        "name": "Prateek Agarwal",
+        "password": "$2b$12$1.7wd1JVtRPvuzXSFVWOqO6TPveoJF/aAessJR9fP4jY.ahkXt.DS",
+        "email": "prateek@example.com"
+    },
+    "Anubhav": {
+        "name": "Anubhav",
+        "password": "$2b$12$YuA.H8LJSQHBO4NxWiHJtOiD1Nmk0T.k/46D6Z7T.GKbfR9Ks/BPy",
+        "email": "anubhav@example.com"
+    }
+}
