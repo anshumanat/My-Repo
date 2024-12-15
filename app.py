@@ -47,12 +47,12 @@ credentials = {
     "usernames": {
         "Prateek": {
             "name": "Prateek Agarwal",
-            "password": hashed_passwords["0"],  # Directly use the password hash here
+            "password": hashed_passwords[0],  # Directly use the password hash here
             "email": "prateek@example.com"  # Add email field
         },
         "Anubhav": {
             "name": "Anubhav",
-            "password": hashed_passwords["1"],  # Directly use the password hash here
+            "password": hashed_passwords[1],  # Directly use the password hash here
             "email": "anubhav@example.com"  # Add email field
         }
     }
