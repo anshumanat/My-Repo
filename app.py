@@ -1,5 +1,6 @@
 import json
 import streamlit as st
+import pandas as pd
 from dotenv import load_dotenv
 from PIL import Image
 import google.generativeai as genai
@@ -33,7 +34,7 @@ credentials = {
             "password": details["password"],
             "email": details["email"]
         }
-        for username, details in credentials_data.items()
+        for username, details in credentials_data["usernames"].items()
     }
 }
 
@@ -73,7 +74,8 @@ else:
             # --- Main App ---
             st.title("Cheque Information Extraction with Gemini AI")
 
-            st.markdown("""**Upload a cheque image to extract key details.**
+            st.markdown("""
+            **Upload a cheque image to extract key details.**
             This tool uses AI to extract:
             - Payee Name
             - Bank Name
@@ -82,7 +84,8 @@ else:
             - Cheque Number
             - Amount  
 
-            After extraction, download the data as a CSV file.""")
+            After extraction, download the data as a CSV file.
+            """)
 
             # File uploader
             uploaded_file = st.file_uploader("Upload a cheque image", type=["jpg", "jpeg", "png"])
