@@ -31,14 +31,19 @@ with file_path.open("rb") as file:
 # Debugging print for hashed_passwords
 st.write(f"Hashed passwords loaded: {hashed_passwords}")  # This is for debugging
 
+# Prepare credentials dictionary
+credentials = {
+    "names": names,
+    "usernames": usernames,
+    "hashed_passwords": hashed_passwords,
+}
+
 # Instantiate the authenticator object
 authenticator = stauth.Authenticate(
-    names, 
-    usernames, 
-    hashed_passwords,
-    cookie_name="sales_dashboard",
-    key="abcdef",
-    cookie_expiry_days=7
+    credentials,  # Pass credentials as a dictionary
+    cookie_name="sales_dashboard",  # Cookie name for session management
+    key="abcdef",  # Secret key for encryption
+    cookie_expiry_days=7  # Expiry days for the cookie
 )
 
 # --- Perform the login process ---
@@ -191,4 +196,3 @@ if authentication_status:
                 st.error("Failed to load the image. Please try again.")
         else:
             st.info("Please upload a cheque image to begin the analysis.")
-
