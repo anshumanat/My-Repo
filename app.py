@@ -36,7 +36,6 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=7            # Expiry time for the session cookies
 )
 
-
 # Perform the login process
 name, authentication_status, username = authenticator.login("Login", "main")
 
