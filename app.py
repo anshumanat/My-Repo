@@ -1,69 +1,75 @@
 import streamlit as st
 import streamlit_authenticator as stauth
-from dotenv import load_dotenv
-import os
 import pandas as pd
+from dotenv import load_dotenv
 from PIL import Image
 import google.generativeai as genai
+import os
 from io import BytesIO
 
-# Load environment variables
+# --- Load Environment Variables ---
 load_dotenv()
 
-# Fetch the Gemini API key from Streamlit secrets
-api_key = st.secrets["GEMINI"]["API_KEY"]
+# Fetch Gemini API key from secrets or environment variables
+api_key = st.secrets.get("GEMINI", {}).get("API_KEY") or os.getenv("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("API Key is missing! Please set the GEMINI_API_KEY in Streamlit Secrets.")
+    st.error("API Key is missing! Please set the GEMINI_API_KEY in Streamlit Secrets or .env file.")
 else:
+    # Configure Gemini API
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel("models/gemini-1.5-pro-001")
 
 # --- Authentication Setup ---
+# Define credentials
 names = ["John Doe", "Jane Smith"]
 usernames = ["johndoe", "janesmith"]
 passwords = ["password123", "securepassword456"]
+
+# Hash passwords
 hashed_passwords = stauth.Hasher(passwords).generate()
 
+# Initialize the authenticator
 authenticator = stauth.Authenticate(
-    names,
-    usernames,
-    hashed_passwords,
-    "cheque_app_cookie",
-    "some_random_signature_key",
+    names=names,
+    usernames=usernames,
+    passwords=hashed_passwords,
+    cookie_name="cheque_app_cookie",
+    key="some_random_signature_key",
     cookie_expiry_days=7,
 )
 
-# Login widget
+# --- Login/Logout ---
 name, authentication_status, username = authenticator.login("Login", "main")
 
 if authentication_status:
     st.sidebar.success(f"Welcome {name}!")
     authenticator.logout("Logout", "sidebar")
 
-    # --- Main App: Cheque Information Extraction ---
+    # --- Main App ---
     st.title("Cheque Information Extraction with Gemini AI")
 
     st.markdown("""
-        **Welcome to the Cheque Information Extraction App!**  
-        Upload a cheque image to extract details such as:
-        - Payee Name
-        - Bank Name
-        - Account Number
-        - Date
-        - Cheque Number
-        - Amount
+    **Upload a cheque image to extract key details.**  
+    This tool uses AI to extract:
+    - Payee Name
+    - Bank Name
+    - Account Number
+    - Date
+    - Cheque Number
+    - Amount  
 
-        After extraction, you can download the results as a CSV file.
+    After extraction, download the data as a CSV file.
     """)
 
     # File uploader
     uploaded_file = st.file_uploader("Upload a cheque image", type=["jpg", "jpeg", "png"])
-    
+
     if uploaded_file:
+        # Display uploaded image
         st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
-        # Load and process image
+        # Load image
         def load_image(image):
             try:
                 return Image.open(image)
@@ -74,20 +80,22 @@ if authentication_status:
         img = load_image(uploaded_file)
 
         if img:
-            # Prompt for Gemini AI
+            # Define the prompt for Gemini AI
             prompt = (
-                "Analyze this cheque image and extract the Payee Name, Bank Name, Account Number, Date, "
-                "Cheque Number, and Amount."
+                "Analyze this cheque image and extract the Payee Name, Bank Name, Account Number, "
+                "Date, Cheque Number, and Amount."
             )
 
+            # Call Gemini AI
             try:
                 result = model.generate_content([img, prompt])
 
                 if result.text:
+                    # Display raw extracted text
                     st.subheader("Extracted Information (Text):")
                     st.write(result.text)
 
-                    # Parse extracted text
+                    # Parse extracted text into structured data
                     def parse_extracted_info(extracted_text):
                         fields = {
                             "Payee Name": None,
@@ -106,14 +114,14 @@ if authentication_status:
 
                     extracted_info = parse_extracted_info(result.text)
 
-                    # Display parsed data as a table
-                    st.subheader("Extracted Information (Table):")
-                    st.table(extracted_info)
-
-                    # Convert extracted info to a Pandas DataFrame
+                    # Convert to DataFrame
                     df = pd.DataFrame([extracted_info])
 
-                    # Download as CSV
+                    # Display structured data
+                    st.subheader("Extracted Information (Table):")
+                    st.table(df)
+
+                    # CSV download functionality
                     def convert_df_to_csv(df):
                         csv_buffer = BytesIO()
                         df.to_csv(csv_buffer, index=False)
@@ -122,19 +130,20 @@ if authentication_status:
 
                     csv_data = convert_df_to_csv(df)
 
+                    # Add download button
                     st.subheader("Download Extracted Information:")
                     st.download_button(
-                        label="Download CSV",
+                        label="Download as CSV",
                         data=csv_data,
                         file_name="cheque_extracted_info.csv",
                         mime="text/csv",
                     )
                 else:
-                    st.warning("No valid content returned from the model. Please try again.")
+                    st.warning("The AI did not return any content. Please try again.")
             except Exception as e:
                 st.error(f"Error generating content: {e}")
         else:
-            st.error("Failed to load the image.")
+            st.error("Failed to load the image. Please try again.")
     else:
         st.info("Please upload a cheque image to begin the analysis.")
 
