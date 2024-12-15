@@ -19,22 +19,21 @@ if len(hashed_passwords) < 2:
 
 # Step 2: Create a dictionary to store each user's credentials
 credentials = {
-    "usernames": {
-        usernames[0]: {
-            "name": names[0],
-            "password": hashed_passwords[0],  # Directly access the hashed password
-            "email": f"{usernames[0].lower()}@example.com"
-        },
-        usernames[1]: {
-            "name": names[1],
-            "password": hashed_passwords[1],  # Directly access the hashed password
-            "email": f"{usernames[1].lower()}@example.com"
-        }
+    # Store each user by username
+    usernames[0]: {
+        "name": names[0],
+        "password": hashed_passwords[0],  # Directly access the hashed password
+        "email": f"{usernames[0].lower()}@example.com"
+    },
+    usernames[1]: {
+        "name": names[1],
+        "password": hashed_passwords[1],  # Directly access the hashed password
+        "email": f"{usernames[1].lower()}@example.com"
     }
 }
 
 # Step 3: Define the path for the credentials JSON file
-file_path = Path(__file__).parent / "hashed_pw.json"  # Change the file extension to .json
+file_path = Path(__file__).parent / "hashed_pw.json"  # Save as .json file
 
 # Ensure that the directory exists
 file_path.parent.mkdir(parents=True, exist_ok=True)
