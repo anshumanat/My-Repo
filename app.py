@@ -8,6 +8,7 @@ import google.generativeai as genai
 import os
 from io import BytesIO
 import streamlit_authenticator as stauth
+import json  # Make sure to import json module
 
 # --- Load Environment Variables ---
 load_dotenv()
@@ -28,11 +29,11 @@ if not file_path.exists():
 with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
 
-loaded_credentials = json.loads(json_data)
-
+# --- Prepare credentials dictionary ---
+# Assuming the structure in the loaded hashed_passwords is something like:
+# hashed_passwords = {"Prateek": {"password": "hashed_password"}, "Anubhav": {"password": "hashed_password"}}
 
 # Prepare credentials dictionary with email field included
- # Prepare credentials dictionary with email field included
 credentials = {
     "usernames": {
         "Prateek": {
@@ -47,7 +48,6 @@ credentials = {
         }
     }
 }
-
 
 # Instantiate the authenticator object
 authenticator = stauth.Authenticate(
