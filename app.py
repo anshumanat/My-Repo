@@ -27,7 +27,7 @@ usernames = ["johndoe", "janesmith"]
 passwords = ["password123", "securepassword456"]
 
 # Hash passwords
-hashed_passwords = stauth.Hasher(passwords).hash()
+hashed_passwords = stauth.Hasher(passwords).generate()
 
 # Initialize the authenticator
 authenticator = stauth.Authenticate(
