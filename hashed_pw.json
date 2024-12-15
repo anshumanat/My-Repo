@@ -1,14 +1,12 @@
 {
-    "usernames": {
-        "Prateek": {
-            "name": "Prateek Agarwal",
-            "password": "$2b$12$a27g5Ym35RuUPT1iUXV7p.kZ4.CMYODGFVRRn5DzdbuKhofUxMQna",
-            "email": "prateek@example.com"
-        },
-        "Anubhav": {
-            "name": "Anubhav",
-            "password": "$2b$12$6c9C/Os4Fz2c9DORDlcevO8meH5/j1Em9isHDs3i57yc7eGfYm6s.",
-            "email": "anubhav@example.com"
-        }
+    "Prateek": {
+        "name": "Prateek Agarwal",
+        "password": "hashed_password_1",
+        "email": "prateek@example.com"
+    },
+    "Anubhav": {
+        "name": "Anubhav",
+        "password": "hashed_password_2",
+        "email": "anubhav@example.com"
     }
 }
