@@ -28,23 +28,24 @@ if not file_path.exists():
 with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
 
-st.write(hashed_passwords)
 
 # Prepare credentials dictionary with email field included
+ # Prepare credentials dictionary with email field included
 credentials = {
     "usernames": {
         "Prateek": {
             "name": "Prateek Agarwal",
-            "password": hashed_passwords[0],
+            "password": hashed_passwords["Prateek"]["password"],  # Access password correctly using the username as key
             "email": "prateek@example.com"  # Add email field
         },
         "Anubhav": {
             "name": "Anubhav",
-            "password": hashed_passwords[1],
+            "password": hashed_passwords["Anubhav"]["password"],  # Access password correctly using the username as key
             "email": "anubhav@example.com"  # Add email field
         }
     }
 }
+
 
 # Instantiate the authenticator object
 authenticator = stauth.Authenticate(
