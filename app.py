@@ -63,6 +63,10 @@ elif login_result == False:
 else:
     # When login is successful, unpack the values
     name, authentication_status, username = login_result
+
+    # Debugging: Print the authentication status
+    st.write(f"Authentication Status: {authentication_status}")
+
     if authentication_status:
         # User is authenticated
         authenticator.logout("Logout", location="main")
