@@ -30,14 +30,26 @@ passwords = ["password123", "securepassword456"]
 # Hash passwords using bcrypt
 hashed_passwords = [bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8') for password in passwords]
 
-# Initialize the authenticator
+# Credentials dictionary for the authenticator
+credentials = {
+    'usernames': {
+        'johndoe': {
+            'name': 'John Doe',
+            'password': hashed_passwords[0],
+        },
+        'janesmith': {
+            'name': 'Jane Smith',
+            'password': hashed_passwords[1],
+        }
+    }
+}
+
+# Initialize the authenticator with the correct arguments
 authenticator = stauth.Authenticate(
-    names=names,
-    usernames=usernames,
-    passwords=hashed_passwords,
+    credentials=credentials,
     cookie_name="cheque_app_cookie",
-    key="some_random_signature_key",
-    cookie_expiry_days=7,
+    key="some_random_signature_key",  # Use a strong key
+    cookie_expiry_days=7,  # Cookie expiry in days
 )
 
 # --- Login/Logout ---
