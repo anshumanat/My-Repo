@@ -6,6 +6,7 @@ from PIL import Image
 import google.generativeai as genai
 import os
 from io import BytesIO
+import yaml
 import streamlit_authenticator as stauth
 
 # --- Load Environment Variables ---
@@ -48,12 +49,26 @@ credentials = {
     }
 }
 
+# --- Load YAML Configuration ---
+# For this example, we're just using a dictionary, but you can also load it from a YAML file if needed.
+config = {
+    'credentials': credentials,
+    'cookie': {
+        'expiry_days': 30,
+        'key': "some_random_signature_key",
+        'name': "random_cookie_name"
+    },
+    'preauthorized': {
+        'emails': ['admin@example.com']  # Optional, for pre-authorized users
+    }
+}
+
 # Initialize the authenticator
 authenticator = stauth.Authenticate(
-    credentials=credentials,   # Pass the credentials dictionary
-    cookie_name="cheque_app_cookie",
-    key="some_random_signature_key",
-    cookie_expiry_days=7,
+    credentials=config['credentials'],  # Pass the credentials dictionary
+    cookie_name=config['cookie']['name'],
+    key=config['cookie']['key'],
+    cookie_expiry_days=config['cookie']['expiry_days'],
 )
 
 # --- Login/Logout ---
@@ -78,11 +93,22 @@ if authentication_status:
     st.sidebar.success(f"Welcome {name}!")
     authenticator.logout("Logout", "sidebar")
 
+    # User-specific content based on the username
+    if username == "johndoe":
+        st.title("John's Content")
+        st.write(f"Welcome {name}, you have access to this content.")
+        # You can add John-specific content here
+    elif username == "janesmith":
+        st.title("Jane's Content")
+        st.write(f"Welcome {name}, you have access to this content.")
+        # You can add Jane-specific content here
+
     # Admin access (only for authenticated users)
     if st.session_state.get("is_admin", False):
         st.title("Admin Panel")
         st.markdown("Welcome to the Admin Panel! You can manage or view admin-level functionality here.")
-        # You can add admin functionality here, e.g., data management, system settings, etc.
+        # Admin functionality can go here
+
     else:
         # Ask for admin password only if the user is logged in
         check_admin_password()
