@@ -53,7 +53,10 @@ authenticator = stauth.Authenticate(
 )
 
 # --- Login/Logout ---
-name, authentication_status, username = authenticator.login("Login", "main")
+location = "main"  # or try "sidebar" or "unrendered"
+print(f"Attempting to render login form at: {location}")
+name, authentication_status, username = authenticator.login("Login", location)
+
 
 # --- Admin Access ---
 admin_password = st.secrets["general"]["password"]  # Fetch admin password from secrets
