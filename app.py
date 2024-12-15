@@ -41,7 +41,7 @@ credentials = {
     }
 }
 
-# Instantiate the authenticator object
+# Instantiate the authenticator object with the credentials
 authenticator = stauth.Authenticate(
     credentials,  # Pass credentials as a dictionary
     cookie_name="sales_dashboard",  # Cookie name for session management
