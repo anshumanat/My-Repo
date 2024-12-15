@@ -28,7 +28,7 @@ if not file_path.exists():
 with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
 
-st.write(hashed_passwords)
+loaded_credentials = json.loads(json_data)
 
 
 # Prepare credentials dictionary with email field included
