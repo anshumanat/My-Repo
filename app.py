@@ -57,7 +57,7 @@ authenticator = stauth.Authenticate(
 )
 
 # --- Login/Logout ---
-name, authentication_status, username = authenticator.login("Login", "main")
+name, authentication_status, username = authenticator.login("Login", "main")  # Ensure 'main' is passed here
 
 # --- Admin Access ---
 admin_password = st.secrets["general"]["password"]  # Fetch admin password from secrets
