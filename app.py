@@ -16,14 +16,21 @@ load_dotenv()
 names = ["Prateek Agarwal", "Anubhav"]
 usernames = ["Prateek", "Anubhav"]
 
-# Load hashed_passwords
+# Load hashed_passwords from the saved file
 file_path = Path(__file__).parent / "hashed_pw.pkl"
-with file_path.open("rb") as file:
-    hashed_passwords = pickle.load(file)
+
+# Check if the file exists
+if not file_path.exists():
+    st.error(f"File {file_path} not found. Please ensure hashed_pw.pkl exists.")
+else:
+    with file_path.open("rb") as file:
+        hashed_passwords = pickle.load(file)
 
 # Instantiate the authenticator object
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords,
-                                   "sales_dashboard", "abcdef", cookie_expiry_days=7)
+authenticator = stauth.Authenticate(
+    names, usernames, hashed_passwords,
+    cookie_name="sales_dashboard", key="abcdef", cookie_expiry_days=7
+)
 
 # Perform the login process
 name, authentication_status, username = authenticator.login("Login", "main")
