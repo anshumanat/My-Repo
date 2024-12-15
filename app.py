@@ -1,5 +1,4 @@
-import pickle
-from pathlib import Path
+import json
 import streamlit as st
 import pandas as pd
 from dotenv import load_dotenv
@@ -8,6 +7,7 @@ import google.generativeai as genai
 import os
 from io import BytesIO
 import streamlit_authenticator as stauth
+from pathlib import Path
 
 # --- Load Environment Variables ---
 load_dotenv()
@@ -16,31 +16,27 @@ load_dotenv()
 names = ["Prateek Agarwal", "Anubhav"]
 usernames = ["Prateek", "Anubhav"]
 
-# Load hashed passwords (assuming hashed_pw.pkl is already generated separately)
-file_path = Path(__file__).parent / "hashed_pw.pkl"
+# Load hashed passwords from JSON file
+file_path = Path(__file__).parent / "hashed_pw.json"  # Use the JSON file instead of pickle
 
 # Ensure the file exists before trying to open it
 if not file_path.exists():
-    st.error("The file 'hashed_pw.pkl' does not exist. Please ensure you have generated the password file.")
+    st.error("The file 'hashed_pw.json' does not exist. Please ensure you have generated the password file.")
     st.stop()
 
-# Load hashed passwords from the pickle file
-with file_path.open("rb") as file:
-    hashed_passwords = pickle.load(file)
- 
-# Prepare credentials dictionary with email field included
+# Load hashed passwords from the JSON file
+with file_path.open("r") as file:
+    credentials_data = json.load(file)
+
+# Prepare the credentials dictionary with email field included
 credentials = {
     "usernames": {
-        "Prateek": {
-            "name": "Prateek Agarwal",
-            "password": hashed_passwords[0],
-            "email": "prateek@example.com"  # Add email field
-        },
-        "Anubhav": {
-            "name": "Anubhav",
-            "password": hashed_passwords[1],
-            "email": "anubhav@example.com"  # Add email field
+        username: {
+            "name": details["name"],
+            "password": details["password"],
+            "email": details["email"]
         }
+        for username, details in credentials_data.items()
     }
 }
 
